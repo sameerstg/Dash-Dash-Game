@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -10,14 +11,14 @@ public class PlayerMovement : MonoBehaviour
     PlayerInput.PlayerMapActions playerInputAction;
     Rigidbody2D rb;
     DelgateAction updateDelegate;
-    bool canJump,isJumpPressed,isJumping;
+    bool canJump, isJumpPressed, isJumping;
     float endYPosition;
     public float jumpPower;
     public float forwardPower;
     public float changeInY;
 
     public TextMeshProUGUI text;
-    
+
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -34,13 +35,14 @@ public class PlayerMovement : MonoBehaviour
         playerInputAction.Enable();
         playerInputAction.Jump.started += Jump;
         playerInputAction.Jump.canceled += JumpCancelled;
-        
-        updateDelegate +=()=> { tempTime += Time.deltaTime;
-            
-        };
-        updateDelegate +=MoveForward;
 
-      
+        updateDelegate += () => {
+            tempTime += Time.deltaTime;
+
+        };
+        updateDelegate += MoveForward;
+
+
     }
     void MoveForward()
     {
@@ -54,13 +56,18 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
-        if (updateDelegate!=null)
+        if (updateDelegate != null)
 
         {
 
             updateDelegate();
         }
         text.text = $"Forward Velocity = {rb.velocity.x}\nJump Velocity = {rb.velocity.y}\n";
+        // game over if we fall off the map
+        if (transform.position.y < -10)
+        {
+            GameOver();
+        }
     }
     void StopMovement()
     {
@@ -71,7 +78,7 @@ public class PlayerMovement : MonoBehaviour
 
     {
         isJumpPressed = true;
-      
+
         Jump();
     }
     void Jump()
@@ -80,7 +87,7 @@ public class PlayerMovement : MonoBehaviour
         {
             return;
         }
-        if (!canJump)return;
+        if (!canJump) return;
         endYPosition = transform.position.y + changeInY;
         iTween.RotateBy(transform.GetChild(0).gameObject, iTween.Hash("z", -0.25, "easeType", "Linear", "time", 0.3f, "delay", 0.05));
         isJumping = true;
@@ -90,17 +97,18 @@ public class PlayerMovement : MonoBehaviour
         //rb.bodyType = RigidbodyType2D.Kinematic;
         //iTween.MoveBy(gameObject, iTween.Hash("y", 3, "easeType", "Linear", "time", 0.17f, "oncomplete", nameof(NormalGravity)));
         //iTween.RotateBy(transform.GetChild(0).gameObject, iTween.Hash("z", -0.25, "easeType", "Linear", "time", 0.3f,"delay",0.05));
-       
+
     }
     void JumpUp()
     {
 
 
-        if (transform.position.y < endYPosition) { 
-        MoveForward();
+        if (transform.position.y < endYPosition)
+        {
+            MoveForward();
 
             rb.velocity += Vector2.up * jumpPower;
-        
+
         }
         else
         {
@@ -111,20 +119,20 @@ public class PlayerMovement : MonoBehaviour
 
 
 
-        
+
     }
     void Gravity()
     {
         updateDelegate -= MoveForward;
 
         MoveForward();
-                rb.velocity += Vector2.down * jumpPower;
+        rb.velocity += Vector2.down * jumpPower;
 
     }
     public void JumpDown()
     {
 
-        
+
 
     }
     float tempTime;
@@ -133,7 +141,7 @@ public class PlayerMovement : MonoBehaviour
         tempTime = 0;
         rb.bodyType = RigidbodyType2D.Dynamic;
     }
-      private void OnCollisionEnter2D(Collision2D collision)
+    private void OnCollisionEnter2D(Collision2D collision)
     {
         print(tempTime);
         isJumping = false;
@@ -144,9 +152,14 @@ public class PlayerMovement : MonoBehaviour
         if (isJumpPressed)
         {
 
-             Jump();
+            Jump();
         }
-        
+
+    }
+    // called when the player hits an enemy or falls off the level
+    public void GameOver()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     private void OnCollisionExit2D(Collision2D collision)
@@ -157,7 +170,7 @@ public class PlayerMovement : MonoBehaviour
 
 
             updateDelegate += Gravity;
-            
+
 
         }
         else
@@ -166,5 +179,6 @@ public class PlayerMovement : MonoBehaviour
         }
 
     }
+
 }
-delegate void DelgateAction(); 
+delegate void DelgateAction();

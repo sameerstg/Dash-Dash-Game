@@ -7,6 +7,7 @@ using UnityEngine.SceneManagement;
 
 public class PlayerMovement : MonoBehaviour
 {
+    public static PlayerMovement _instance;
     PlayerInput playerInput;
     PlayerInput.PlayerMapActions playerInputAction;
     Rigidbody2D rb;
@@ -21,10 +22,12 @@ public class PlayerMovement : MonoBehaviour
 
     void Awake()
     {
+        _instance = this;
         rb = GetComponent<Rigidbody2D>();
         rb.drag = 0;
         playerInput = new();
         playerInputAction = playerInput.PlayerMap;
+        life = 3;
     }
     private void OnEnable()
     {
@@ -66,7 +69,16 @@ public class PlayerMovement : MonoBehaviour
         // game over if we fall off the map
         if (transform.position.y < -10)
         {
+            if (checkpoint && life>0)
+            {
+                transform.position = lastCheckpointPosition;
+                life--;
+            }
+            else
+            {
+
             GameOver();
+            }
         }
     }
     void StopMovement()
@@ -136,10 +148,23 @@ public class PlayerMovement : MonoBehaviour
 
     }
     float tempTime;
+    public bool checkpoint;
+    public Vector3 lastCheckpointPosition;
+    internal int life;
+
     void NormalGravity()
     {
         tempTime = 0;
         rb.bodyType = RigidbodyType2D.Dynamic;
+    }
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.CompareTag("Checkpoint"))
+        {
+            Debug.LogError("check");
+            checkpoint = true;
+            lastCheckpointPosition = transform.position;
+        }
     }
     private void OnCollisionEnter2D(Collision2D collision)
     {
@@ -159,6 +184,7 @@ public class PlayerMovement : MonoBehaviour
     // called when the player hits an enemy or falls off the level
     public void GameOver()
     {
+
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 

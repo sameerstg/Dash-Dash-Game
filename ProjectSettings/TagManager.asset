@@ -5,6 +5,8 @@ TagManager:
   serializedVersion: 2
   tags:
   - PlayerMovement
+  - Checkpoint
+  - Color
   layers:
   - Default
   - TransparentFX

@@ -48,7 +48,16 @@ public class Enemy : MonoBehaviour
     {
         if (other.CompareTag("PlayerMovement"))
         {
-            other.GetComponent<PlayerMovement>().GameOver();
+            if (PlayerMovement._instance.checkpoint && PlayerMovement._instance.life>0)
+            {
+                PlayerMovement._instance.transform.position = PlayerMovement._instance.lastCheckpointPosition;
+                PlayerMovement._instance.life--;
+            }
+            else
+            {
+
+                PlayerMovement._instance.GameOver();
+            }
         }
     }
 }

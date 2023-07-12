@@ -43,21 +43,30 @@ public class Enemy : MonoBehaviour
             }
         }
     }
-
+    ParticleSystem part;
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (other.CompareTag("PlayerMovement"))
         {
-            if (PlayerMovement._instance.checkpoint && PlayerMovement._instance.life>0)
-            {
-                PlayerMovement._instance.transform.position = PlayerMovement._instance.lastCheckpointPosition;
-                PlayerMovement._instance.life--;
-            }
-            else
-            {
-
-                PlayerMovement._instance.GameOver();
-            }
+            //part = Instantiate(PlayerMovement._instance.particleSystem, PlayerMovement._instance.transform.position, Quaternion.identity, PlayerMovement._instance.transform);
+            //PlayerMovement._instance.isStarted = false;
+            Over();
         }
+    }
+    void Over()
+    {
+        //Destroy(part);
+        if (PlayerMovement._instance.checkpoint && PlayerMovement._instance.life > 0)
+        {
+            PlayerMovement._instance.transform.position = PlayerMovement._instance.lastCheckpointPosition;
+            PlayerMovement._instance.life--;
+        }
+        else
+        {
+
+            PlayerMovement._instance.GameOver();
+        }
+        //PlayerMovement._instance.isStarted = true;
+
     }
 }

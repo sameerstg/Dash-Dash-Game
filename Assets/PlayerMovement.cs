@@ -17,9 +17,14 @@ public class PlayerMovement : MonoBehaviour
     public float jumpPower;
     public float forwardPower;
     public float changeInY;
-
+    public ParticleSystem particleSystem;
     public TextMeshProUGUI text;
-
+    public GameObject menu;
+    public bool isStarted;
+    float time;
+    public int score, highScore;
+    public TextMeshProUGUI highScoreText, scoreText;
+    
     void Awake()
     {
         _instance = this;
@@ -28,6 +33,8 @@ public class PlayerMovement : MonoBehaviour
         playerInput = new();
         playerInputAction = playerInput.PlayerMap;
         life = 3;
+        highScore = PlayerPrefs.GetInt("high");
+        highScoreText.text = $"High Score : {highScore}";
     }
     private void OnEnable()
     {
@@ -59,10 +66,19 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
-        if (updateDelegate != null)
+        if (updateDelegate != null && isStarted)
 
         {
+            time += Time.deltaTime;
+            score = (int)time;
+            scoreText.text = $"Score : {score}";
+            if (score > highScore)
+            {
+                highScore = score;
+                highScoreText.text = $"High Score : {highScore}";
+                PlayerPrefs.SetInt("high", highScore);
 
+            }
             updateDelegate();
         }
         text.text = $"Forward Velocity = {rb.velocity.x}\nJump Velocity = {rb.velocity.y}\n";
@@ -77,7 +93,7 @@ public class PlayerMovement : MonoBehaviour
             else
             {
 
-            GameOver();
+                GameOver();
             }
         }
     }
@@ -90,11 +106,18 @@ public class PlayerMovement : MonoBehaviour
 
     {
         isJumpPressed = true;
-
+        
         Jump();
     }
     void Jump()
     {
+        Debug.Log(isStarted);
+        if (!isStarted)
+        {
+            isStarted = true;
+            menu.SetActive(false);
+            return;
+        }
         if (!isJumpPressed)
         {
             return;
@@ -164,6 +187,16 @@ public class PlayerMovement : MonoBehaviour
             Debug.LogError("check");
             checkpoint = true;
             lastCheckpointPosition = transform.position;
+        }
+        else if (collision.CompareTag("EditorOnly"))
+        {
+            //Debug.Log(AdsManager._instance);
+            AdsManager._instance.ShowInterstitialAd();
+        }
+        else if (collision.CompareTag("GameController"))
+        {
+            //Debug.Log(AdsManager._instance);
+            AdsManager._instance.ShowRewardedAd();
         }
     }
     private void OnCollisionEnter2D(Collision2D collision)

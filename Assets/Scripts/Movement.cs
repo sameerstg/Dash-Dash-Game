@@ -18,7 +18,7 @@ public class Movement : MonoBehaviour
     public float GroundCheckRadius;
     public LayerMask GroundMask;
     public float jumpLimit;
-    private bool isJumping = false,gravity;
+    private bool isJumping = false,gravity, isOnGround;
     PlayerInput playerInput;
     public GameObject body;
     private void Awake()
@@ -38,16 +38,12 @@ public class Movement : MonoBehaviour
 
     private void Jump(UnityEngine.InputSystem.InputAction.CallbackContext obj)
     {
-        if (OnGround())
+        if (isOnGround)
         {
-
-        StartCoroutine(JumpRoutine());
+            StartCoroutine(JumpRoutine());
         }
     }
-    private void Jump()
-    {
-        StartCoroutine(JumpRoutine());
-    }
+   
     private void OnDisable()
     {
         playerInput.Disable();
@@ -64,7 +60,7 @@ public class Movement : MonoBehaviour
         Vector3 curRotation = body.transform.eulerAngles,destRotation = body.transform.eulerAngles+Vector3.back*90;
         while (transform.position.y <curY+jumpLimit)
         {
-            body.transform.eulerAngles = Vector3.Lerp(curRotation, destRotation, body.transform.position.y/ curY + jumpLimit);
+            body.transform.eulerAngles = Vector3.Lerp(curRotation, destRotation,  curY + jumpLimit/ body.transform.position.y );
             transform.position  += Vector3.up*10 * Time.deltaTime;
             yield return null;
         }
@@ -72,31 +68,27 @@ public class Movement : MonoBehaviour
         isJumping = false;
         //Debug.Log(transform.position.y - curY);
        
-        StartCoroutine(GravityRoutine());
+        //StartCoroutine(GravityRoutine());
     }
     IEnumerator GravityRoutine()
     {
+        while (isJumping)
+        {
+            yield return null;
+        }
         gravity = true;
 
         do
         {
             transform.position += Vector3.down * 10 * Time.deltaTime;
             yield return null;
-        } while (!OnGround());
+        } while (!isOnGround);
         gravity = false;
 
     }
     void Update()
     {
         transform.position += Vector3.right * SpeedValues[(int)CurrentSpeed] * Time.deltaTime;
-        if (!OnGround() && !isJumping && !gravity)
-        {
-            StartCoroutine(GravityRoutine());
-        }
-        if (playerInput.PlayerMap.Jump.inProgress && !isJumping && OnGround())
-        {
-            Jump();
-        }
     }
     private void OnCollisionEnter2D(Collision2D collision)
     {
@@ -104,26 +96,39 @@ public class Movement : MonoBehaviour
         {
             Hit();
         }
-        else if (ForwardHit())
+       
+       
+    }
+    private void OnCollisionStay2D(Collision2D collision)
+    {
+        if (ForwardHit())
         {
             Hit();
         }
-       
+        else
+        {
+            isOnGround = true;
+            if (playerInput.PlayerMap.Jump.inProgress && !isJumping)
+            {
+                StartCoroutine(JumpRoutine());
+            }
+        }
     }
- 
+    private void OnCollisionExit2D(Collision2D collision)
+    {
+            isOnGround = false;
+            StartCoroutine(GravityRoutine());
+    }
     void Hit()
     {
         StopAllCoroutines();
         SceneManager.LoadScene(0);
 
     }
-    bool OnGround()
-    {
-        return Physics2D.OverlapCircle(GroundCheckTransform.position, GroundCheckRadius, GroundMask);
-    }
+   
     bool ForwardHit()
     {
-        
+       
         return Physics2D.OverlapCircle(forwardCheckTransform.position, GroundCheckRadius,GroundMask);
 
     }

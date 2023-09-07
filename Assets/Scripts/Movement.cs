@@ -17,7 +17,8 @@ public class Movement : MonoBehaviour
     public Transform GroundCheckTransform,forwardCheckTransform;
     public float GroundCheckRadius;
     public LayerMask GroundMask;
-    public float jumpLimit;
+    public float jumpLimit,
+    jumpDuration = 0.1f;
     private bool isJumping = false,gravity, isOnGround;
     PlayerInput playerInput;
     public GameObject body;
@@ -58,12 +59,33 @@ public class Movement : MonoBehaviour
         isJumping = true;
         float curY = transform.position.y;
         Vector3 curRotation = body.transform.eulerAngles,destRotation = body.transform.eulerAngles+Vector3.back*90;
-        while (transform.position.y <curY+jumpLimit)
+        float time = 0;
+        //while (transform.position.y <curY+jumpLimit)
+        //{
+        //    //body.transform.eulerAngles = Vector3.Lerp(curRotation, destRotation,  curY + jumpLimit/ body.transform.position.y );
+        //    if (transform.position.y +  jumpLimit * Time.deltaTime > curY+jumpLimit)
+        //    {
+        //        transform.position += Vector3.up *(curY+jumpLimit);
+        //        break;
+
+        //    }
+        //    else
+        //    {
+        //        transform.position += Vector3.up * jumpLimit * Time.deltaTime;
+
+        //    }
+        //    yield return null;
+        //}
+        while (time<=jumpDuration)
         {
-            body.transform.eulerAngles = Vector3.Lerp(curRotation, destRotation,  curY + jumpLimit/ body.transform.position.y );
-            transform.position  += Vector3.up*10 * Time.deltaTime;
+            transform.position = new Vector3(transform.position.x, Mathf.Lerp(curY, curY + jumpLimit, time / jumpDuration),transform.position.z);
+            time += Time.deltaTime;
             yield return null;
         }
+        transform.position = new Vector3(transform.position.x, curY + jumpLimit, transform.position.z);
+
+        //transform.position += Vector3.up *(curY+jumpLimit);
+
         body.transform.eulerAngles = destRotation;
         isJumping = false;
         //Debug.Log(transform.position.y - curY);
@@ -80,7 +102,7 @@ public class Movement : MonoBehaviour
 
         do
         {
-            transform.position += Vector3.down * 10 * Time.deltaTime;
+            transform.position += Vector3.down * jumpLimit/jumpDuration * Time.deltaTime;
             yield return null;
         } while (!isOnGround);
         gravity = false;
@@ -107,6 +129,11 @@ public class Movement : MonoBehaviour
         }
         else
         {
+            transform.position = new Vector3(transform.position.x, collision.contacts[0].point.y, transform.position.z);
+            if (transform.eulerAngles.z % 90 != 0)
+            {
+                transform.eulerAngles = new Vector3(transform.eulerAngles.x, transform.eulerAngles.y, transform.eulerAngles.z % 90);
+            }
             isOnGround = true;
             if (playerInput.PlayerMap.Jump.inProgress && !isJumping)
             {
@@ -117,7 +144,11 @@ public class Movement : MonoBehaviour
     private void OnCollisionExit2D(Collision2D collision)
     {
             isOnGround = false;
+        if (gameObject.activeInHierarchy)
+        {
             StartCoroutine(GravityRoutine());
+
+        }
     }
     void Hit()
     {
